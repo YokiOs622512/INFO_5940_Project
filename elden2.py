@@ -13,7 +13,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.documents import Document
 
 # ==========================================
-# 1. 配置与初始化 (Configuration)
+# 1. 配置与初始化
 # ==========================================
 
 st.set_page_config(
@@ -30,7 +30,6 @@ if not api_key:
     st.error("⚠️ API Key not found. Please set your API_KEY in the environment variables.")
     st.stop()
 
-# 初始化 LLM
 llm = ChatOpenAI(
     model="openai.gpt-4o",
     temperature=0.7,
@@ -38,7 +37,6 @@ llm = ChatOpenAI(
     openai_api_base=base_url
 )
 
-# 初始化 Embedding
 embeddings = OpenAIEmbeddings(
     model="openai.text-embedding-3-small",
     openai_api_key=api_key,
@@ -46,10 +44,9 @@ embeddings = OpenAIEmbeddings(
 )
 
 # ==========================================
-# 2. 游戏数据与状态管理 (Game State)
+# 2. 状态管理
 # ==========================================
 
-# 初始化 Session State
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Greetings, Tarnished. Upload the World Codex (JSON) to begin thy journey."}]
 
@@ -62,14 +59,14 @@ if "processed_file_hashes" not in st.session_state:
 if "current_persona" not in st.session_state:
     st.session_state.current_persona = "Ranni the Witch"
 
-# --- 游戏引擎状态 ---
+# 游戏状态
 if "game_data" not in st.session_state:
-    st.session_state.game_data = None # 存储完整的 JSON 数据字典
+    st.session_state.game_data = None 
 if "current_location_id" not in st.session_state:
-    st.session_state.current_location_id = None # 玩家当前位置 ID
+    st.session_state.current_location_id = None 
 
 # ==========================================
-# 3. 角色设定 (Persona System)
+# 3. 角色设定
 # ==========================================
 NPC_PERSONAS = {
     "Ranni the Witch": {
@@ -102,7 +99,7 @@ NPC_PERSONAS = {
 }
 
 # ==========================================
-# 4. 后端逻辑 (Backend Logic)
+# 4. 后端逻辑
 # ==========================================
 
 def create_file_hash(uploaded_file):
@@ -111,7 +108,6 @@ def create_file_hash(uploaded_file):
     return hashlib.md5(hash_input.encode()).hexdigest()
 
 def process_documents(uploaded_files):
-    """读取文件：既存入 RAG 用于检索，也解析 JSON 用于游戏逻辑"""
     if not uploaded_files:
         return False
     
@@ -125,14 +121,13 @@ def process_documents(uploaded_files):
         with st.spinner(f"Processing {uploaded_file.name}..."):
             text_content = ""
             
-            # --- JSON 处理 ---
+            # JSON 处理
             if uploaded_file.type == "application/json":
                 try:
-                    # 1. 解析为 Python 字典，存入 Game State 用于逻辑控制
                     data = json.load(uploaded_file)
                     st.session_state.game_data = data
                     
-                    # 尝试设置初始位置
+                    # 初始化位置
                     if not st.session_state.current_location_id and "locations" in data:
                         first_loc = list(data["locations"].keys())[0]
                         st.session_state.current_location_id = first_loc
@@ -141,13 +136,12 @@ def process_documents(uploaded_files):
                             "content": f"The world has been reconstructed. We begin at the **{data['locations'][first_loc]['name']}**."
                         })
 
-                    # 2. 转换为文本，存入 RAG 用于 Lore 检索
                     text_content = json.dumps(data, indent=2, ensure_ascii=False)
                 except Exception as e:
                     st.error(f"Error parsing JSON: {e}")
                     continue
 
-            # --- PDF/TXT 处理 ---
+            # PDF/TXT 处理
             elif uploaded_file.type == "application/pdf":
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
                     tmp_file.write(uploaded_file.getvalue())
@@ -181,32 +175,31 @@ def process_documents(uploaded_files):
     return False
 
 def get_current_game_context():
-    """获取当前游戏状态的文本描述，用于注入 Prompt"""
+    """获取当前游戏状态的文本描述"""
     if not st.session_state.game_data or not st.session_state.current_location_id:
         return "Game State: No world data loaded. Just chat normally."
     
     loc_id = st.session_state.current_location_id
     loc_data = st.session_state.game_data["locations"].get(loc_id, {})
     
+    # 返回纯文本字符串
     context = f"""
     --- CURRENT GAME STATE ---
     Current Location ID: {loc_id}
     Location Name: {loc_data.get('name', 'Unknown')}
     Description: {loc_data.get('description', '')}
-    Available Exits/Choices: {list(loc_data.get('exits', []))}
+    Available Exits: {list(loc_data.get('exits', []))}
     Boss Here: {loc_data.get('boss', 'None')}
     --------------------------
     """
     return context
 
 def generate_npc_response(user_input, persona_name):
-    """生成回复：结合 RAG + 游戏状态"""
-    
-    # 1. 准备上下文
+    # 准备上下文
     game_context = get_current_game_context()
     chat_history = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:]])
     
-    # 2. RAG 检索 (Lore)
+    # RAG 检索
     rag_context = ""
     source_docs = []
     if st.session_state.vector_store:
@@ -214,7 +207,7 @@ def generate_npc_response(user_input, persona_name):
         source_docs = st.session_state.vector_store.similarity_search(query, k=3)
         rag_context = "\n".join([d.page_content for d in source_docs])
 
-    # 3. 构建 Prompt
+    # 构建 Prompt
     persona_prompt = NPC_PERSONAS[persona_name]["prompt"]
     
     full_prompt = f"""
@@ -243,26 +236,20 @@ def generate_npc_response(user_input, persona_name):
     return response.content, source_docs
 
 def handle_movement(target_location_id):
-    """处理玩家点击按钮后的移动逻辑"""
     st.session_state.current_location_id = target_location_id
-    
-    # 获取新地点信息
     loc_name = st.session_state.game_data["locations"][target_location_id]["name"]
     
-    # 强制让 NPC 立即根据新地点生成一段描述
-    # 注意：这里我们不append user message，直接让NPC说话，看起来更像游戏旁白
     with st.spinner("Travelling..."):
-        # 我们用一个隐藏的prompt触发NPC描述
+        # 模拟移动后 NPC 自动描述
         response, _ = generate_npc_response(f"I have arrived at {loc_name}. Describe my surroundings.", st.session_state.current_persona)
         st.session_state.messages.append({"role": "assistant", "content": response})
     
     st.rerun()
 
 # ==========================================
-# 5. 前端界面 (Streamlit UI)
+# 5. 前端界面
 # ==========================================
 
-# --- 侧边栏 ---
 with st.sidebar:
     st.title("⚙️ Game Controls")
     
@@ -289,16 +276,16 @@ with st.sidebar:
             st.session_state.current_location_id = list(st.session_state.game_data["locations"].keys())[0]
         st.rerun()
 
-# --- 主界面 ---
+# 主界面
 st.title("Elden Ring: The Shattered Conversation")
 st.caption(f"Guide: **{st.session_state.current_persona}** | Mode: **Interactive RPG**")
 
-# 1. 显示聊天历史
+# 显示历史
 for msg in st.session_state.messages:
     avatar = "👤" if msg["role"] == "user" else "🧙‍♀️"
     st.chat_message(msg["role"], avatar=avatar).write(msg["content"])
 
-# 2. 游戏交互区域 (Action Bar)
+# --- 游戏交互区域 (Action Bar) ---
 if st.session_state.game_data and st.session_state.current_location_id:
     
     current_loc = st.session_state.game_data["locations"].get(st.session_state.current_location_id)
@@ -308,8 +295,6 @@ if st.session_state.game_data and st.session_state.current_location_id:
         st.subheader("⚔️ Actions & Travel")
         
         exits = current_loc.get("exits", [])
-        
-        # 动态生成按钮
         cols = st.columns(len(exits) + 1 if exits else 1)
         
         for idx, exit_id in enumerate(exits):
@@ -320,7 +305,7 @@ if st.session_state.game_data and st.session_state.current_location_id:
         if "ending" in current_loc.get("events", [{}])[0]: 
             st.warning("✨ An Ending is upon you. Speak to make your choice.")
 
-# 3. 聊天输入框
+# 输入框
 if prompt := st.chat_input("Speak to your guide..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user", avatar="👤").write(prompt)
@@ -330,15 +315,18 @@ if prompt := st.chat_input("Speak to your guide..."):
             response_text, source_docs = generate_npc_response(prompt, st.session_state.current_persona)
             st.markdown(response_text)
             
-            # --- 修复部分 (Fix is here) ---
+            # --- ✅ 修复点：安全显示上下文 ---
             if source_docs:
                 with st.expander("🔮 See Reasoning & Game Data"):
-                    st.json(get_current_game_context()) 
+                    # 1. 修复 JSON 解析错误：改用 st.text
+                    st.markdown("**Current Game Logic State:**")
+                    st.text(get_current_game_context()) 
                     
-                    # 使用 st.markdown 和循环替代 st.write list，避免 Numpy 冲突
-                    st.markdown("**Retrieval Context:**")
+                    # 2. 修复 Numpy 报错：改用 st.markdown + 循环，不使用 st.write([])
+                    st.markdown("---")
+                    st.markdown("**Retrieval Context (RAG):**")
                     for i, doc in enumerate(source_docs):
-                        st.caption(f"**Fragment {i+1}:** {doc.page_content[:200]}...")
-            # -----------------------------
+                        st.markdown(f"**Fragment {i+1}:**")
+                        st.caption(doc.page_content[:300] + "...") # 安全截取字符串
     
     st.session_state.messages.append({"role": "assistant", "content": response_text})
