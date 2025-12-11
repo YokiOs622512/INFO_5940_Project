@@ -1,0 +1,471 @@
+{
+  "metadata": {
+    "world_name": "The Lands Between",
+    "version": "2.0",
+    "description": "Complete Elden Ring–style text RPG JSON for a Python or chatbot engine."
+  },
+
+  "classes": {
+    "Wizard": {
+      "description": "Master of arcane power.",
+      "starting_items": ["Glimmer Shot", "Wooden Staff"]
+    },
+    "Warrior": {
+      "description": "Strong melee fighter.",
+      "starting_items": ["Iron Sword", "Shield"]
+    },
+    "Cleric": {
+      "description": "Servant of divine forces.",
+      "starting_items": ["Small Mend", "Prayer Beads"]
+    },
+    "Rogue": {
+      "description": "Stealthy assassin.",
+      "starting_items": ["Shadow Step Boots", "Throwing Knives"]
+    },
+    "Wretch": {
+      "description": "Begins with nothing, can become anything.",
+      "starting_items": ["Broken Club"]
+    }
+  },
+
+  "locations": {
+    "chapel_of_forsaken": {
+      "name": "Chapel of the Forsaken",
+      "description": "A ruined chapel with golden dust floating in the air.",
+      "items": ["Dusty Chest", "Cracked Statue"],
+      "events": ["chapel_statue_event", "chapel_chest_event"],
+      "exits": ["forest_crossroads"],
+      "class_interactions": {
+        "Wizard": "You sense arcane residue deep within the stone walls.",
+        "Warrior": "A cracked pillar looks weak enough to smash.",
+        "Cleric": "A holy presence lingers in the broken statue.",
+        "Rogue": "You spot hidden wire traps around the chest.",
+        "Wretch": "A whisper calls to you: 'Take my gift...'"
+      }
+    },
+
+    "forest_crossroads": {
+      "name": "Forest Crossroads",
+      "description": "Three roads diverge: a forest, a ravine, and a ruined camp.",
+      "items": ["Faded Signpost"],
+      "events": ["crossroads_choice_event"],
+      "exits": ["forest_of_echoes", "ravine_of_murk", "gatefront_ruins"]
+    },
+
+    "forest_of_echoes": {
+      "name": "Forest of Echoes",
+      "description": "A forest where magic vibrates faintly in the air.",
+      "items": ["Hunter's Bow"],
+      "events": ["wizard_illusory_room_event", "forest_loot_event"],
+      "class_interactions": {
+        "Wizard": "A floating crystal resonates with you.",
+        "Warrior": "A tree stump holds a massive embedded axe.",
+        "Cleric": "You feel a faint divine pulse beneath the earth.",
+        "Rogue": "You notice footprints—ambushers.",
+        "Wretch": "You hear faint voices guiding you deeper."
+      },
+      "exits": ["gatefront_ruins"]
+    },
+
+    "ravine_of_murk": {
+      "name": "Ravine of Murk",
+      "description": "A poisoned ravine filled with murky fog.",
+      "items": ["Rotten Dagger", "Mysterious Cocoon"],
+      "events": ["ravine_poison_event"],
+      "exits": ["gatefront_ruins"]
+    },
+
+    "gatefront_ruins": {
+      "name": "Gatefront Ruins",
+      "description": "A ruined military encampment with a suspicious chest.",
+      "items": ["Trap Chest"],
+      "events": ["trap_chest_event"],
+      "teleport_traps": true,
+      "exits": ["castle_stormwatch_gate"]
+    },
+
+    "castle_stormwatch_gate": {
+      "name": "Castle Stormwatch Gate",
+      "description": "Lightning storms surround the great castle walls.",
+      "events": ["stormwatch_gate_event"],
+      "exits": ["castle_courtyard"]
+    },
+
+    "castle_courtyard": {
+      "name": "Stormwatch Courtyard",
+      "description": "Statues, broken soldiers, and swirling winds.",
+      "items": ["Stormflower Herb"],
+      "events": ["courtyard_explore_event"],
+      "exits": ["castle_armory", "castle_hall", "grafted_hall"]
+    },
+
+    "castle_armory": {
+      "name": "Stormwatch Armory",
+      "description": "Rusted weapons and locked drawers.",
+      "items": ["Steel Spear", "Magebreaker Shield"],
+      "events": ["armory_loot_event"],
+      "exits": ["castle_courtyard"]
+    },
+
+    "castle_hall": {
+      "name": "Great Hall of Storms",
+      "description": "A crackling storm orb hovers above.",
+      "events": ["storm_herald_boss_event"],
+      "exits": ["grafted_hall"],
+      "boss": "Storm Herald"
+    },
+
+    "grafted_hall": {
+      "name": "Grafted Hall",
+      "description": "A flesh-stitched hall of horrors.",
+      "items": ["Grafted Spear"],
+      "events": ["grafted_hall_event"],
+      "exits": ["grafted_throne"]
+    },
+
+    "grafted_throne": {
+      "name": "Throne of the Grafted",
+      "description": "Godrick sits upon a grotesque throne.",
+      "events": ["godrick_boss_event"],
+      "exits": ["stormwatch_exit"],
+      "boss": "Godrick"
+    },
+
+    "stormwatch_exit": {
+      "name": "Road to Liurnia",
+      "description": "The storm clears. A lake stretches far ahead.",
+      "items": ["Liurnia Map Fragment"],
+      "exits": ["liurnia_lakeshore"]
+    },
+
+    "liurnia_lakeshore": {
+      "name": "Liurnia Lakeside",
+      "description": "A shimmering lake with magical reflections.",
+      "events": ["liurnia_explore_event"],
+      "exits": ["academy_gate", "moon_tower"]
+    },
+
+    "academy_gate": {
+      "name": "Gate of the Raya Academy",
+      "description": "A large magic barrier blocks the entrance.",
+      "events": ["academy_gate_event"],
+      "exits": ["academy_hall"]
+    },
+
+    "academy_hall": {
+      "name": "Academy Main Hall",
+      "description": "Floating books and arcane constructs guard the halls.",
+      "events": ["academy_puzzle_event"],
+      "exits": ["grand_library"]
+    },
+
+    "grand_library": {
+      "name": "Grand Library",
+      "description": "Rennala floats within a cocoon of moonlight.",
+      "events": ["rennala_boss_event"],
+      "exits": ["liurnia_lakeshore"],
+      "boss": "Rennala"
+    },
+
+    "caelid_mainland": {
+      "name": "Caelid—Rotting Battlefield",
+      "description": "Scarlet rot covers everything.",
+      "events": ["caelid_rot_event"],
+      "exits": ["radahn_arena"]
+    },
+
+    "radahn_arena": {
+      "name": "Wailing Dunes (Radahn)",
+      "description": "A battlefield frozen in time.",
+      "events": ["radahn_boss_event"],
+      "boss": "Radahn",
+      "exits": ["leyndell_outer"]
+    },
+
+    "leyndell_outer": {
+      "name": "Leyndell Outer Wall",
+      "description": "You see the Erdtree towering above.",
+      "events": ["leyndell_entry_event"],
+      "exits": ["capital_throne"]
+    },
+
+    "capital_throne": {
+      "name": "Throne of the Erdtree",
+      "description": "Marika’s broken form hangs suspended.",
+      "events": ["erdtree_choice_event"],
+      "exits": ["farum_azula"]
+    },
+
+    "farum_azula": {
+      "name": "Crumbling Farum Azula",
+      "description": "A floating ruin where time collapses.",
+      "events": ["dragon_guardian_event"],
+      "exits": ["final_ending_chamber"]
+    },
+
+    "final_ending_chamber": {
+      "name": "Fractured Arena",
+      "description": "The final choice awaits you.",
+      "events": ["final_ending_event"]
+    }
+  },
+
+  "events": {
+    "chapel_statue_event": {
+      "trigger": "inspect_statue",
+      "description": "The cracked statue glows faintly.",
+      "results": {
+        "Wizard": {
+          "text": "An arcane compartment opens.",
+          "items_gained": ["Blue Memory Stone Fragment", "Minor Glintstone Tome"]
+        },
+        "Cleric": {
+          "text": "A blessing flows through you.",
+          "items_gained": ["Blessing of Weak Light"]
+        },
+        "Warrior": {
+          "text": "Nothing special happens."
+        },
+        "Rogue": {
+          "text": "You notice a pressure latch.",
+          "items_gained": ["Lockpick"]
+        },
+        "Wretch": {
+          "text": "A whisper offers forbidden power.",
+          "choice": {
+            "accept": { "items_gained": ["Frenzied Ember Seed"], "flags_set": ["chaos_mark"] },
+            "refuse": { "text": "The whisper fades." }
+          }
+        }
+      }
+    },
+
+    "chapel_chest_event": {
+      "trigger": "open_chest",
+      "description": "You open the dusty chest.",
+      "results": {
+        "Wizard": { "items_gained": ["Worn Robes"] },
+        "Warrior": { "items_gained": ["Rusty Shortsword"] },
+        "Rogue": { "items_gained": ["Shadow Step Boots"] },
+        "Cleric": { "items_gained": ["Sacred Drop"] },
+        "Wretch": { "items_gained": ["Tarnished Journal"] }
+      }
+    },
+
+    "crossroads_choice_event": {
+      "trigger": "choose_path",
+      "choices": {
+        "forest": "forest_of_echoes",
+        "ravine": "ravine_of_murk",
+        "straight": "gatefront_ruins"
+      }
+    },
+
+    "wizard_illusory_room_event": {
+      "trigger": "investigate_crystal",
+      "class_required": "Wizard",
+      "description": "A hidden room unfolds behind illusion.",
+      "items_gained": ["Staff of Echoes", "Spell: Piercing Comet"]
+    },
+
+    "trap_chest_event": {
+      "trigger": "open_trap_chest",
+      "class_results": {
+        "Wizard": {
+          "choices": {
+            "dispel": { "items_gained": ["Crystal Dagger"] },
+            "alter": { "teleport_to": "academy_hall" },
+            "trigger": { "teleport_to": "caelid_mainland" }
+          }
+        },
+        "Rogue": { "items_gained": ["Silent Dagger"] },
+        "Cleric": { "teleport_to": "caelid_mainland" },
+        "Warrior": { "teleport_to": "caelid_mainland" },
+        "Wretch": { "teleport_to": "caelid_mainland" }
+      }
+    },
+
+    "stormwatch_gate_event": {
+      "trigger": "approach_gate",
+      "class_results": {
+        "Wizard": { "next": "castle_courtyard" },
+        "Warrior": { "next": "castle_courtyard" },
+        "Rogue": { "next": "castle_courtyard" },
+        "Cleric": { "next": "castle_courtyard" },
+        "Wretch": { "next": "castle_courtyard" }
+      }
+    },
+
+    "storm_herald_boss_event": {
+      "trigger": "fight_herald",
+      "class_results": {
+        "Wizard": {
+          "text": "You target its arcane core.",
+          "items_gained": ["Stormcaller Staff"],
+          "next": "grafted_hall"
+        },
+        "Warrior": { "items_gained": ["Herald’s Crest Shield"], "next": "grafted_hall" },
+        "Rogue": { "items_gained": ["Stormfang Knife"], "next": "grafted_hall" },
+        "Cleric": { "items_gained": ["Cleansing Talisman"], "next": "grafted_hall" },
+        "Wretch": { "items_gained": ["Storm Fragment"], "next": "grafted_hall" }
+      }
+    },
+
+    "grafted_hall_event": {
+      "trigger": "inspect_room",
+      "choices": {
+        "take_spear": { "items_gained": ["Grafted Spear"] },
+        "move_forward": { "next": "grafted_throne" }
+      }
+    },
+
+    "godrick_boss_event": {
+      "trigger": "fight_godrick",
+      "choices": {
+        "battle": { "next": "godrick_outcome" },
+        "talk": { "next": "godrick_dialogue" }
+      }
+    },
+
+    "godrick_dialogue": {
+      "trigger": "speak_to_godrick",
+      "choices": {
+        "persuade": {
+          "success_rate": 0.25,
+          "success": { "items_gained": ["Great Rune of Graft"], "flags_set": ["spared_godrick"], "next": "stormwatch_exit" },
+          "failure": { "next": "godrick_outcome" }
+        }
+      }
+    },
+
+    "godrick_outcome": {
+      "trigger": "resolve_godrick",
+      "options": {
+        "kill": { "flags_set": ["killed_godrick"], "items_gained": ["Great Rune of Graft"], "next": "stormwatch_exit" },
+        "spare": { "flags_set": ["spared_godrick"], "next": "stormwatch_exit" }
+      }
+    },
+
+    "liurnia_explore_event": {
+      "trigger": "explore_liurnia",
+      "choices": {
+        "go_academy": { "next": "academy_gate" },
+        "go_tower": { "next": "moon_tower" }
+      }
+    },
+
+    "academy_gate_event": {
+      "trigger": "approach_academy",
+      "class_results": {
+        "Wizard": { "text": "Your magic resonates—gate opens.", "next": "academy_hall" },
+        "Rogue": { "text": "You find a vent leading in.", "next": "academy_hall" },
+        "Cleric": { "text": "Holy forces resist arcane wards.", "next": "academy_hall" },
+        "Warrior": { "text": "You push a weakened pillar aside.", "next": "academy_hall" },
+        "Wretch": { "next": "academy_hall" }
+      }
+    },
+
+    "academy_puzzle_event": {
+      "trigger": "solve_puzzle",
+      "description": "Mirrors shift and reveal a hidden key.",
+      "items_gained": ["Arcane Mirror Key"],
+      "next": "grand_library"
+    },
+
+    "rennala_boss_event": {
+      "trigger": "fight_rennala",
+      "choices": {
+        "battle": { "next": "rennala_outcome" },
+        "spare": { "flags_set": ["spared_rennala"], "next": "liurnia_lakeshore" }
+      }
+    },
+
+    "rennala_outcome": {
+      "trigger": "resolve_rennala",
+      "options": {
+        "kill": { "items_gained": ["Great Rune of the Moon"], "flags_set": ["killed_rennala"], "next": "liurnia_lakeshore" }
+      }
+    },
+
+    "caelid_rot_event": {
+      "trigger": "explore_caelid",
+      "description": "Rot clouds swirl.",
+      "items_gained": ["Rot Ward Potion"],
+      "next": "radahn_arena"
+    },
+
+    "radahn_boss_event": {
+      "trigger": "fight_radahn",
+      "choices": {
+        "mercy": { "flags_set": ["mercy_radahn"], "items_gained": ["Starcore Fragment"], "next": "leyndell_outer" },
+        "slay": { "flags_set": ["killed_radahn"], "items_gained": ["Starscourge Rune"], "next": "leyndell_outer" }
+      }
+    },
+
+    "leyndell_entry_event": {
+      "trigger": "enter_capital",
+      "description": "The Erdtree blocks your path.",
+      "choices": {
+        "seek_order": { "flags_set": ["path_order"], "next": "capital_throne" },
+        "seek_night": { "flags_set": ["path_ranni"], "next": "capital_throne" },
+        "seek_flame": { "flags_set": ["path_chaos"], "next": "capital_throne" }
+      }
+    },
+
+    "erdtree_choice_event": {
+      "trigger": "approach_erdtree",
+      "choices": {
+        "burn": { "flags_set": ["burned_erdtree"], "next": "farum_azula" },
+        "restore": { "flags_set": ["restore_order"], "next": "farum_azula" },
+        "reject_all": { "flags_set": ["twilight_path"], "next": "farum_azula" }
+      }
+    },
+
+    "dragon_guardian_event": {
+      "trigger": "fight_dragon",
+      "choices": {
+        "spare": { "flags_set": ["spared_dragon"], "next": "final_ending_chamber" },
+        "kill": { "flags_set": ["killed_dragon"], "next": "final_ending_chamber" }
+      }
+    },
+
+    "final_ending_event": {
+      "trigger": "choose_fate",
+      "choices": {
+        "order": { "ending": "age_of_order" },
+        "stars": { "ending": "age_of_stars" },
+        "chaos": { "ending": "frenzied_flame" },
+        "twilight": { "ending": "age_of_twilight" },
+        "champion": { "ending": "age_of_champion" },
+        "mercy": { "ending": "age_of_mercy" }
+      }
+    }
+  },
+
+  "endings": {
+    "age_of_order": {
+      "requirements": ["restore_order"],
+      "description": "A new strict golden order governs the Lands Between."
+    },
+    "age_of_stars": {
+      "requirements": ["path_ranni"],
+      "description": "You follow Ranni into an age of moonlit freedom."
+    },
+    "frenzied_flame": {
+      "requirements": ["burned_erdtree", "chaos_mark"],
+      "description": "All burns as you become Lord of Chaos."
+    },
+    "age_of_twilight": {
+      "requirements": ["twilight_path"],
+      "description": "A balanced world free from gods and flames."
+    },
+    "age_of_champion": {
+      "requirements": ["killed_godrick", "killed_rennala", "killed_radahn", "killed_dragon"],
+      "description": "Strength alone shapes the new age."
+    },
+    "age_of_mercy": {
+      "requirements": ["spared_dragon", "spared_rennala", "spared_godrick"],
+      "description": "A gentler world rises from compassion."
+    }
+  }
+}
