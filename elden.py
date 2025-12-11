@@ -1,4 +1,5 @@
 import streamlit as st
+import json
 import os
 import tempfile
 import uuid
@@ -254,7 +255,7 @@ with st.sidebar:
     st.subheader("📜 Lore Fragments (Knowledge Base)")
     uploaded_files = st.file_uploader(
         "Upload PDF/TXT Lore", 
-        type=["pdf", "txt"], 
+        type=["pdf", "txt", "json"], 
         accept_multiple_files=True
     )
     
