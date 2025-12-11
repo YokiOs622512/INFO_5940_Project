@@ -106,12 +106,11 @@ def create_file_hash(uploaded_file):
     return hashlib.md5(hash_input.encode()).hexdigest()
 
 def process_documents(uploaded_files):
-    """读取上传的 Lore 文件 (PDF/TXT) 并存入 ChromaDB"""
+    """读取上传的 Lore 文件 (PDF/TXT/JSON) 并存入 ChromaDB"""
     if not uploaded_files:
         return False
     
     all_documents = []
-    new_files_count = 0
     
     for uploaded_file in uploaded_files:
         file_hash = create_file_hash(uploaded_file)
@@ -122,7 +121,7 @@ def process_documents(uploaded_files):
         with st.spinner(f"Communing with the Greater Will (Processing {uploaded_file.name})..."):
             text_content = ""
             
-            # 处理 PDF
+            # --- 处理 PDF ---
             if uploaded_file.type == "application/pdf":
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
                     tmp_file.write(uploaded_file.getvalue())
@@ -133,10 +132,24 @@ def process_documents(uploaded_files):
                     text_content = "\n".join([doc.page_content for doc in docs])
                 finally:
                     os.unlink(tmp_file_path)
-            # 处理 TXT
+            
+            # --- 处理 TXT ---
             elif uploaded_file.type == "text/plain":
                 text_content = uploaded_file.read().decode("utf-8")
                 
+            # --- 新增：处理 JSON ---
+            elif uploaded_file.type == "application/json":
+                try:
+                    # 读取 JSON 数据
+                    data = json.load(uploaded_file)
+                    
+                    # 策略：将 JSON 转换为格式化的字符串，以便 LLM 阅读
+                    # ensure_ascii=False 确保中文字符（如果有）正常显示
+                    text_content = json.dumps(data, indent=2, ensure_ascii=False)
+                except Exception as e:
+                    st.error(f"Error parsing JSON {uploaded_file.name}: {e}")
+                    continue
+
             if text_content:
                 # 添加元数据
                 all_documents.append(Document(
@@ -144,10 +157,9 @@ def process_documents(uploaded_files):
                     metadata={"source": uploaded_file.name}
                 ))
                 st.session_state.processed_file_hashes.add(file_hash)
-                new_files_count += 1
     
     if all_documents:
-        # 分块 (Chunking) - 设置较小的 chunk 以获取精确的 Lore
+        # 分块 (Chunking) 
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=100)
         chunks = text_splitter.split_documents(all_documents)
         
