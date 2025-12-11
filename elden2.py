@@ -62,7 +62,7 @@ if "processed_file_hashes" not in st.session_state:
 if "current_persona" not in st.session_state:
     st.session_state.current_persona = "Ranni the Witch"
 
-# --- 新增：游戏引擎状态 ---
+# --- 游戏引擎状态 ---
 if "game_data" not in st.session_state:
     st.session_state.game_data = None # 存储完整的 JSON 数据字典
 if "current_location_id" not in st.session_state:
@@ -125,14 +125,14 @@ def process_documents(uploaded_files):
         with st.spinner(f"Processing {uploaded_file.name}..."):
             text_content = ""
             
-            # --- JSON 处理 (关键更新) ---
+            # --- JSON 处理 ---
             if uploaded_file.type == "application/json":
                 try:
                     # 1. 解析为 Python 字典，存入 Game State 用于逻辑控制
                     data = json.load(uploaded_file)
                     st.session_state.game_data = data
                     
-                    # 尝试设置初始位置 (默认取 locations 的第一个 key)
+                    # 尝试设置初始位置
                     if not st.session_state.current_location_id and "locations" in data:
                         first_loc = list(data["locations"].keys())[0]
                         st.session_state.current_location_id = first_loc
@@ -166,7 +166,6 @@ def process_documents(uploaded_files):
                 st.session_state.processed_file_hashes.add(file_hash)
     
     if all_documents:
-        # 存入 ChromaDB
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         chunks = text_splitter.split_documents(all_documents)
         
@@ -211,7 +210,6 @@ def generate_npc_response(user_input, persona_name):
     rag_context = ""
     source_docs = []
     if st.session_state.vector_store:
-        # 结合用户问题和当前地点进行检索
         query = f"{user_input} {st.session_state.current_location_id}"
         source_docs = st.session_state.vector_store.similarity_search(query, k=3)
         rag_context = "\n".join([d.page_content for d in source_docs])
@@ -251,12 +249,11 @@ def handle_movement(target_location_id):
     # 获取新地点信息
     loc_name = st.session_state.game_data["locations"][target_location_id]["name"]
     
-    # 在聊天记录中模拟一条“系统消息”
-    st.session_state.messages.append({"role": "user", "content": f"(Travels to {loc_name})"})
-    
     # 强制让 NPC 立即根据新地点生成一段描述
+    # 注意：这里我们不append user message，直接让NPC说话，看起来更像游戏旁白
     with st.spinner("Travelling..."):
-        response, _ = generate_npc_response(f"I have arrived at {loc_name}. What do I see?", st.session_state.current_persona)
+        # 我们用一个隐藏的prompt触发NPC描述
+        response, _ = generate_npc_response(f"I have arrived at {loc_name}. Describe my surroundings.", st.session_state.current_persona)
         st.session_state.messages.append({"role": "assistant", "content": response})
     
     st.rerun()
@@ -283,13 +280,13 @@ with st.sidebar:
         if process_documents(uploaded_files):
             st.success("World Loaded!")
     
-    # 显示当前状态 (调试用)
     if st.session_state.current_location_id:
         st.info(f"📍 Location: {st.session_state.current_location_id}")
 
     if st.button("Restart Game"):
         st.session_state.messages = []
-        st.session_state.current_location_id = list(st.session_state.game_data["locations"].keys())[0] if st.session_state.game_data else None
+        if st.session_state.game_data:
+            st.session_state.current_location_id = list(st.session_state.game_data["locations"].keys())[0]
         st.rerun()
 
 # --- 主界面 ---
@@ -301,7 +298,7 @@ for msg in st.session_state.messages:
     avatar = "👤" if msg["role"] == "user" else "🧙‍♀️"
     st.chat_message(msg["role"], avatar=avatar).write(msg["content"])
 
-# 2. 游戏交互区域 (Action Bar) - 只有在加载了 JSON 后才显示
+# 2. 游戏交互区域 (Action Bar)
 if st.session_state.game_data and st.session_state.current_location_id:
     
     current_loc = st.session_state.game_data["locations"].get(st.session_state.current_location_id)
@@ -310,23 +307,17 @@ if st.session_state.game_data and st.session_state.current_location_id:
         st.write("---")
         st.subheader("⚔️ Actions & Travel")
         
-        # 获取当前地点的出口 (Exits)
         exits = current_loc.get("exits", [])
-        events = current_loc.get("events", [])
         
         # 动态生成按钮
-        # 使用 Streamlit 的列布局来放置按钮
         cols = st.columns(len(exits) + 1 if exits else 1)
         
-        # 遍历生成“移动”按钮
         for idx, exit_id in enumerate(exits):
-            # 获取目标地点的名字（如果存在）
             dest_name = st.session_state.game_data["locations"].get(exit_id, {}).get("name", exit_id)
             if cols[idx].button(f"👣 Go to {dest_name}", key=f"btn_{exit_id}"):
                 handle_movement(exit_id)
         
-        # 检查是否到了结局
-        if "ending" in current_loc.get("events", [{}])[0]: # 简化的结局检测
+        if "ending" in current_loc.get("events", [{}])[0]: 
             st.warning("✨ An Ending is upon you. Speak to make your choice.")
 
 # 3. 聊天输入框
@@ -339,9 +330,15 @@ if prompt := st.chat_input("Speak to your guide..."):
             response_text, source_docs = generate_npc_response(prompt, st.session_state.current_persona)
             st.markdown(response_text)
             
+            # --- 修复部分 (Fix is here) ---
             if source_docs:
                 with st.expander("🔮 See Reasoning & Game Data"):
-                    st.json(get_current_game_context()) # 展示当前游戏状态作为证据
-                    st.write("Retrieval Context:", [d.page_content[:200] for d in source_docs])
+                    st.json(get_current_game_context()) 
+                    
+                    # 使用 st.markdown 和循环替代 st.write list，避免 Numpy 冲突
+                    st.markdown("**Retrieval Context:**")
+                    for i, doc in enumerate(source_docs):
+                        st.caption(f"**Fragment {i+1}:** {doc.page_content[:200]}...")
+            # -----------------------------
     
     st.session_state.messages.append({"role": "assistant", "content": response_text})
